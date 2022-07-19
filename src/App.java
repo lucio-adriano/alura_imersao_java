@@ -1,4 +1,7 @@
+import java.io.FileNotFoundException;
+import java.io.InputStream;
 import java.net.URI;
+import java.net.URL;
 import java.net.http.HttpClient;
 import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
@@ -12,7 +15,7 @@ public class App {
         // fazer uma conexão HTTP e buscar os filmes
         HttpClient client = HttpClient.newHttpClient();
         HttpRequest request = HttpRequest.newBuilder()
-            .uri(URI.create("https://api.mocki.io/v2/549a5d8b"))
+            .uri(URI.create("https://api.mocki.io/v2/549a5d8b/Top250Movies"))
             .build();
         HttpResponse<String> response = client.send(request, BodyHandlers.ofString());
         String body = response.body();
@@ -22,18 +25,21 @@ public class App {
         List<Map<String, String>> listaDeFilmes = parse.parse(body);
 
         //exibir e manipular os dados
+        var geradora = new GeradoraDeFigurinhas();
         for (Map<String, String> filme : listaDeFilmes) {
-            Float classificacao = Float.valueOf(filme.get("imDbRating"));
-            Integer estrela =  Math.round(classificacao);
-            System.out.println("\u001b[1mTitulo:\u001b[m " + "\u001b[3m"+filme.get("title"));
-            System.out.println("\u001b[1mPoster:\u001b[m " + "\u001b[3m"+filme.get("image"));
-            System.out.println("\u001b[1m\u001b[30m\u001b[43mClassificção:\u001b[m " + classificacao);
-            for (var i = 0; i < estrela; i++){
-                System.out.print("\u001b[33m* \u001b[m");
+
+            var titulo = filme.get("title");
+            var imagem = filme.get("image");
+            String nomeArquivo = titulo.replace(":", "-")  + ".png";
+
+            try {
+                InputStream inputStream = new URL(imagem).openStream();
+                System.out.println("Gerando imagem - [" + titulo + "]");
+                geradora.cria(inputStream, nomeArquivo);
+
+            } catch (final java.io.FileNotFoundException e) {
+                System.out.println("Imagem não encontrada ou link inválido");
             }
-
-            System.out.println();
-
         }
     }
 }
